@@ -58,19 +58,14 @@ def ensure_user_desktop_integration():
                     scaled.savev(str(target_dir / "google.antigravity.installer.png"), "png", [], [])
                     scaled.savev(str(target_dir / "antigravity-installer.png"), "png", [], [])
 
-        # Ensure index.theme exists
+        # Remove any local index.theme that could shadow system GNOME icon categories
         index_theme = hicolor_dir / "index.theme"
-        if not index_theme.exists():
-            dirs_section = ",".join(f"{s}x{s}/apps" for s in sizes)
-            entries = "\n".join(
-                f"[{s}x{s}/apps]\nSize={s}\nContext=Applications\nType=Fixed\n"
-                for s in sizes
-            )
-            index_theme.write_text(
-                f"[Icon Theme]\nName=Hicolor\nComment=Fallback Icon Theme\n"
-                f"Hidden=true\nDirectories={dirs_section}\n\n{entries}",
-                encoding="utf-8",
-            )
+        if index_theme.exists():
+            index_theme.unlink(missing_ok=True)
+
+        cache_file = hicolor_dir / "icon-theme.cache"
+        if cache_file.exists():
+            cache_file.unlink(missing_ok=True)
 
         # Pixmaps directory
         user_pixmap_dir = home / ".local" / "share" / "pixmaps"
@@ -122,11 +117,6 @@ StartupWMClass=google.antigravity.installer{no_display_str}
 
         if shutil.which("update-desktop-database"):
             subprocess.run(["update-desktop-database", str(user_apps_dir)], capture_output=True)
-        if shutil.which("gtk-update-icon-cache"):
-            subprocess.run(
-                ["gtk-update-icon-cache", "-q", "-f", "-t", str(hicolor_dir)],
-                capture_output=True,
-            )
     except Exception:
         pass
 

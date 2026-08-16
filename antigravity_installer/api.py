@@ -117,7 +117,7 @@ def fetch_all_releases() -> Tuple[List[ReleaseInfo], List[ReleaseInfo]]:
     return hub, ide
 
 
-def check_installer_github_update(current_version: str = "1.1.0") -> Optional[dict]:
+def check_installer_github_update(current_version: str = "1.2.0") -> Optional[dict]:
     """Checks GitHub releases for an updated installer version."""
     url = "https://api.github.com/repos/dmz86/antigravity-installer/releases/latest"
     data = _fetch_json(url, timeout=5)
