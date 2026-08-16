@@ -98,7 +98,16 @@ StartupWMClass=google.antigravity.installer
 """
         desktop_file = user_apps_dir / "google.antigravity.installer.desktop"
         desktop_file.write_text(desktop_content, encoding="utf-8")
-        (user_apps_dir / "antigravity-installer.desktop").write_text(desktop_content, encoding="utf-8")
+
+        # Clean up legacy duplicate installer desktop file
+        legacy_installer = user_apps_dir / "antigravity-installer.desktop"
+        if legacy_installer.exists():
+            legacy_installer.unlink(missing_ok=True)
+
+        # Clean up legacy user copies if installed in system (/usr/share/applications)
+        for comp_desk in ("antigravity.desktop", "antigravity-ide.desktop", "antigravity-cli.desktop"):
+            if (Path("/usr/share/applications") / comp_desk).exists():
+                (user_apps_dir / comp_desk).unlink(missing_ok=True)
 
         if shutil.which("update-desktop-database"):
             subprocess.run(["update-desktop-database", str(user_apps_dir)], capture_output=True)
