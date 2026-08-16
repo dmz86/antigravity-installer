@@ -170,6 +170,27 @@ class ViewComponents(Gtk.Box):
             self.banner.set_revealed(False)
         self.append(self.banner)
 
+        # 0.1 GitHub Installer Update Banner
+        self.update_banner = Adw.Banner()
+        self.update_banner.set_button_label(_("btn_download_update"))
+        self._update_url = "https://github.com/dmz86/antigravity-installer/releases/latest"
+        self._last_update_info = None
+
+        def _on_update_clicked(b):
+            try:
+                import gi
+                gi.require_version("Gtk", "4.0")
+                gi.require_version("Gdk", "4.0")
+                from gi.repository import Gtk, Gdk
+                Gtk.show_uri(self.get_root(), self._update_url, Gdk.CURRENT_TIME)
+            except Exception:
+                import subprocess
+                subprocess.Popen(["xdg-open", self._update_url])
+
+        self.update_banner.connect("button-clicked", _on_update_clicked)
+        self.update_banner.set_revealed(False)
+        self.append(self.update_banner)
+
         # 0.5 App Header / Hero Section with Antigravity Logo
         header_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
         header_box.set_halign(Gtk.Align.CENTER)
@@ -336,6 +357,18 @@ class ViewComponents(Gtk.Box):
 
         self.lbl_status.set_text(_("versions_loaded"))
 
+    def set_installer_update(self, update_info: Optional[dict]):
+        """Reveals banner if a newer version of the installer is available on GitHub."""
+        self._last_update_info = update_info
+        if update_info:
+            self._update_url = update_info.get("url", "https://github.com/dmz86/antigravity-installer/releases/latest")
+            msg = _("installer_update_available").replace("{version}", update_info.get("version", ""))
+            self.update_banner.set_title(msg)
+            self.update_banner.set_button_label(_("btn_download_update"))
+            self.update_banner.set_revealed(True)
+        else:
+            self.update_banner.set_revealed(False)
+
     def refresh_translations(self):
         """Updates all strings in view when language changes."""
         self.header_title.set_label(_("app_title"))
@@ -345,6 +378,11 @@ class ViewComponents(Gtk.Box):
         if desktop and "gnome" not in desktop.lower() and "ubuntu" not in desktop.lower():
             msg = _("non_gnome_alert").replace("{desktop}", desktop)
             self.banner.set_title(msg)
+
+        if self._last_update_info:
+            msg = _("installer_update_available").replace("{version}", self._last_update_info.get("version", ""))
+            self.update_banner.set_title(msg)
+            self.update_banner.set_button_label(_("btn_download_update"))
 
         self.comp_group.set_title(_("components_title"))
         self.comp_group.set_description(_("components_desc"))

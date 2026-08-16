@@ -83,7 +83,18 @@ def ensure_user_desktop_integration():
         user_apps_dir.mkdir(parents=True, exist_ok=True)
 
         appimage_env = os.environ.get("APPIMAGE")
-        exec_target = appimage_env if appimage_env else "antigravity-installer"
+        # Check if user declined /opt installation to set NoDisplay
+        config_file = home / ".config" / "antigravity-installer" / "settings.json"
+        no_display = False
+        if config_file.exists():
+            try:
+                cfg = json.loads(config_file.read_text(encoding="utf-8"))
+                if cfg.get("opt_prompt_dismissed") and not cfg.get("opt_installed"):
+                    no_display = True
+            except Exception:
+                pass
+
+        no_display_str = "\nNoDisplay=true" if no_display else ""
 
         desktop_content = f"""[Desktop Entry]
 Name=Antigravity Suite Installer
@@ -94,7 +105,7 @@ Terminal=false
 Type=Application
 Categories=Development;Utility;
 StartupNotify=true
-StartupWMClass=google.antigravity.installer
+StartupWMClass=google.antigravity.installer{no_display_str}
 """
         desktop_file = user_apps_dir / "google.antigravity.installer.desktop"
         desktop_file.write_text(desktop_content, encoding="utf-8")

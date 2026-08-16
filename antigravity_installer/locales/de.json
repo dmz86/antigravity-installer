@@ -68,5 +68,12 @@
   "theme_light": "Helles Design",
   "about_title": "Über Antigravity Installer",
   "about_desc": "Offizieller grafischer Installer für die Google Antigravity Suite auf Linux x64.",
-  "non_gnome_alert": "Desktop-Umgebung '{desktop}' erkannt: Antigravity Suite ist für GNOME/Ubuntu optimiert. Das Dock-Verhalten kann abweichen."
+  "non_gnome_alert": "Desktop-Umgebung '{desktop}' erkannt: Antigravity Suite ist für GNOME/Ubuntu optimiert. Das Dock-Verhalten kann abweichen.",
+  "installer_update_available": "Ein Update für Antigravity Installer ist verfügbar: v{version}",
+  "btn_download_update": "Herunterladen",
+  "dialog_opt_install_title": "Antigravity Installer auf dem System installieren?",
+  "dialog_opt_install_body": "Möchten Sie die Anwendung dauerhaft in /opt installieren, damit sie im Anwendungsmenü immer zur Verwaltung und Aktualisierung der Suite verfügbar ist?",
+  "btn_install_opt": "In /opt installieren",
+  "btn_not_now": "Nicht jetzt (Nur temporär)",
+  "opt_install_success": "Antigravity Installer wurde erfolgreich in /opt installiert."
 }

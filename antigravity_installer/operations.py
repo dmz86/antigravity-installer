@@ -477,6 +477,64 @@ def uninstall_cli(ctx: OperationContext) -> bool:
         except Exception as e:
             ctx.log("WARNING", f"Could not remove {p}: {e}")
 
+    remove_icon("antigravity-cli")
+    update_desktop_database_cache(ctx)
+    return True
+
+
+def install_self_to_opt(source_appimage: str, ctx: OperationContext) -> bool:
+    """Installs the AppImage binary into /opt/antigravity-installer/ and configures system shortcut."""
+    ctx.log("INFO", "Installing Antigravity Suite Installer to /opt/antigravity-installer/...")
+    try:
+        opt_dir = Path("/opt/antigravity-installer")
+        opt_dir.mkdir(parents=True, exist_ok=True)
+        target_appimage = opt_dir / "Antigravity-Installer-x86_64.AppImage"
+
+        src_path = Path(source_appimage)
+        if not src_path.exists():
+            ctx.log("ERROR", f"Source AppImage not found at {source_appimage}")
+            return False
+
+        shutil.copy2(src_path, target_appimage)
+        target_appimage.chmod(0o755)
+        ctx.log("SUCCESS", f"Installed {target_appimage}")
+
+        # Symlink in /usr/bin/
+        bin_link = Path("/usr/bin/antigravity-installer")
+        if bin_link.exists() or bin_link.is_symlink():
+            bin_link.unlink()
+        bin_link.symlink_to(target_appimage)
+        ctx.log("SUCCESS", f"Created symlink {bin_link} -> {target_appimage}")
+
+        # Desktop entry in /usr/share/applications/
+        desk_file = APPLICATIONS_DIR / "google.antigravity.installer.desktop"
+        desk_content = f"""[Desktop Entry]
+Name=Antigravity Suite Installer
+Comment=Installer, manager and updater for Google Antigravity Suite (Hub, IDE, CLI)
+Exec={target_appimage} %u
+Icon=google.antigravity.installer
+Terminal=false
+Type=Application
+Categories=Development;Utility;
+StartupNotify=true
+StartupWMClass=google.antigravity.installer
+NoDisplay=false
+"""
+        desk_file.write_text(desk_content, encoding="utf-8")
+        ctx.log("SUCCESS", f"Registered system launcher {desk_file}")
+
+        # Register installer icon to system hicolor
+        installer_icon = get_hub_icon_source()
+        if installer_icon:
+            register_icon_scales(installer_icon, "google.antigravity.installer")
+
+        update_desktop_database_cache(ctx)
+        return True
+    except Exception as e:
+        ctx.log("ERROR", f"Failed to install to /opt: {e}")
+        return False
+
+
 def ensure_system_fuse(ctx: OperationContext):
     """Checks for FUSE2 support and installs libfuse2t64 / libfuse2 if needed on Ubuntu / Debian."""
     try:

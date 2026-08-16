@@ -20,6 +20,7 @@ from antigravity_installer.operations import (
     install_cli,
     install_hub,
     install_ide,
+    install_self_to_opt,
     repair_all,
     uninstall_cli,
     uninstall_hub,
@@ -39,7 +40,7 @@ def emit_progress(pct: float, msg: str):
 
 def main():
     parser = argparse.ArgumentParser(description="Antigravity Privileged Worker")
-    parser.add_argument("--action", required=True, choices=["install", "uninstall", "repair"])
+    parser.add_argument("--action", required=True, choices=["install", "uninstall", "repair", "install_self"])
     parser.add_argument("--payload", required=True, help="JSON encoded configuration payload")
     args = parser.parse_args()
 
@@ -49,7 +50,11 @@ def main():
     success = True
     action = args.action
 
-    if action == "repair":
+    if action == "install_self":
+        src = payload.get("source_appimage", "")
+        success = install_self_to_opt(src, ctx)
+
+    elif action == "repair":
         success = repair_all(ctx)
 
     elif action == "uninstall":

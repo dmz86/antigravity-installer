@@ -3,6 +3,10 @@ Main Application Window for Antigravity Suite Installer.
 Coordinates ViewStack navigation, async data fetching, threading, and theme/i18n switching.
 """
 
+import json
+import os
+import shutil
+import subprocess
 import threading
 from pathlib import Path
 from typing import Dict, List, Optional
@@ -14,7 +18,7 @@ gi.require_version("Adw", "1")
 from gi.repository import Adw, GLib, Gdk, Gio, Gtk
 
 from antigravity_installer import __version__
-from antigravity_installer.api import fetch_all_releases
+from antigravity_installer.api import check_installer_github_update, fetch_all_releases
 from antigravity_installer.config import ReleaseInfo
 from antigravity_installer.detector import InstalledState, detect_all
 from antigravity_installer.i18n import (
@@ -58,6 +62,9 @@ class MainWindow(Adw.ApplicationWindow):
 
         # Start initial async load
         self._start_data_fetch()
+
+        # Check if first run from portable AppImage to offer stable /opt install
+        GLib.idle_add(self._check_first_run_opt_install)
 
     def _register_icon_theme(self):
         from antigravity_installer.config import BUNDLED_ICONS_DIR
@@ -191,20 +198,119 @@ class MainWindow(Adw.ApplicationWindow):
             )
             dialog.present()
 
+    def _check_first_run_opt_install(self):
+        """Checks if running from an uninstalled AppImage and prompts user for /opt installation."""
+        appimage_path = os.environ.get("APPIMAGE", "")
+        if not appimage_path:
+            return False
+
+        if appimage_path.startswith("/opt/antigravity-installer/"):
+            return False
+
+        config_dir = Path.home() / ".config" / "antigravity-installer"
+        config_file = config_dir / "settings.json"
+        config_data = {}
+        if config_file.exists():
+            try:
+                config_data = json.loads(config_file.read_text(encoding="utf-8"))
+            except Exception:
+                pass
+
+        if config_data.get("opt_prompt_dismissed"):
+            return False
+
+        def on_install_confirmed():
+            config_dir.mkdir(parents=True, exist_ok=True)
+            config_data["opt_prompt_dismissed"] = True
+            config_data["opt_installed"] = True
+            config_file.write_text(json.dumps(config_data), encoding="utf-8")
+
+            def worker():
+                run_privileged_worker(
+                    action_type="install_self",
+                    payload={"source_appimage": appimage_path},
+                )
+            threading.Thread(target=worker, daemon=True).start()
+
+        def on_install_declined():
+            config_dir.mkdir(parents=True, exist_ok=True)
+            config_data["opt_prompt_dismissed"] = True
+            config_data["opt_installed"] = False
+            config_file.write_text(json.dumps(config_data), encoding="utf-8")
+
+            user_desk = Path.home() / ".local" / "share" / "applications" / "google.antigravity.installer.desktop"
+            if user_desk.exists():
+                txt = user_desk.read_text(encoding="utf-8")
+                if "NoDisplay=" in txt:
+                    txt = "\n".join(
+                        line if not line.startswith("NoDisplay=") else "NoDisplay=true"
+                        for line in txt.splitlines()
+                    )
+                else:
+                    txt += "\nNoDisplay=true\n"
+                user_desk.write_text(txt, encoding="utf-8")
+                if shutil.which("update-desktop-database"):
+                    subprocess.run(["update-desktop-database", str(user_desk.parent)], capture_output=True)
+
+        if hasattr(Adw, "AlertDialog"):
+            dialog = Adw.AlertDialog(
+                heading=_("dialog_opt_install_title"),
+                body=_("dialog_opt_install_body"),
+            )
+            dialog.add_response("cancel", _("btn_not_now"))
+            dialog.add_response("install", _("btn_install_opt"))
+            dialog.set_response_appearance("install", Adw.ResponseAppearance.SUGGESTED)
+            dialog.set_default_response("install")
+            dialog.set_close_response("cancel")
+
+            def on_response(d, response_id):
+                if response_id == "install":
+                    on_install_confirmed()
+                else:
+                    on_install_declined()
+
+            dialog.connect("response", on_response)
+            dialog.present(self)
+
+        elif hasattr(Adw, "MessageDialog"):
+            dialog = Adw.MessageDialog(
+                transient_for=self,
+                heading=_("dialog_opt_install_title"),
+                body=_("dialog_opt_install_body"),
+            )
+            dialog.add_response("cancel", _("btn_not_now"))
+            dialog.add_response("install", _("btn_install_opt"))
+            dialog.set_response_appearance("install", Adw.ResponseAppearance.SUGGESTED)
+            dialog.set_default_response("install")
+            dialog.set_close_response("cancel")
+
+            def on_response(d, response_id):
+                if response_id == "install":
+                    on_install_confirmed()
+                else:
+                    on_install_declined()
+
+            dialog.connect("response", on_response)
+            dialog.present()
+
+        return False
+
     def _start_data_fetch(self):
-        """Fetches installed state and API releases in a background thread."""
+        """Fetches installed state, API releases, and GitHub installer updates in background thread."""
         self.view_comp.lbl_status.set_text(_("checking_versions"))
 
         def worker():
             try:
                 installed = detect_all()
                 hub, ide = fetch_all_releases()
+                inst_update = check_installer_github_update(__version__)
 
                 def update_ui():
                     self.installed_state = installed
                     self.hub_releases = hub
                     self.ide_releases = ide
                     self.view_comp.set_system_data(installed, hub, ide)
+                    self.view_comp.set_installer_update(inst_update)
                     return False
 
                 GLib.idle_add(update_ui)

@@ -115,3 +115,27 @@ def fetch_all_releases() -> Tuple[List[ReleaseInfo], List[ReleaseInfo]]:
     hub = fetch_hub_releases()
     ide = fetch_ide_releases()
     return hub, ide
+
+
+def check_installer_github_update(current_version: str = "1.0.0") -> Optional[dict]:
+    """Checks GitHub releases for an updated installer version."""
+    url = "https://api.github.com/repos/dmz86/antigravity-installer/releases/latest"
+    data = _fetch_json(url, timeout=5)
+    if isinstance(data, dict):
+        tag = str(data.get("tag_name", "")).strip().lstrip("v")
+        if tag:
+            try:
+                def parse_v(v_str):
+                    return tuple(int(x) for x in v_str.split(".") if x.isdigit())
+
+                if parse_v(tag) > parse_v(current_version):
+                    return {
+                        "version": tag,
+                        "url": data.get("html_url", "https://github.com/dmz86/antigravity-installer/releases/latest"),
+                        "name": data.get("name", f"Release v{tag}"),
+                        "body": data.get("body", ""),
+                    }
+            except Exception:
+                pass
+    return None
+
