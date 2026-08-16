@@ -1,0 +1,11 @@
+[Desktop Entry]
+Name=Antigravity Suite Installer
+Comment=Installer, manager and updater for Google Antigravity Suite (Hub, IDE, CLI)
+Exec=antigravity-installer %u
+Icon=google.antigravity.installer
+Terminal=false
+Type=Application
+Categories=Development;Utility;
+Keywords=google;antigravity;installer;ide;cli;agent;
+StartupNotify=true
+StartupWMClass=google.antigravity.installer

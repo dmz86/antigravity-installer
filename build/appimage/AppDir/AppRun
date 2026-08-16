@@ -1,0 +1,21 @@
+#!/usr/bin/env bash
+set -e
+
+# Resolve directory of this AppImage bundle
+HERE="$(cd "$(dirname "$(readlink -f "${0}")")" && pwd)"
+
+export APPDIR="${HERE}"
+export PATH="${HERE}/usr/bin:${PATH}"
+export PYTHONPATH="${HERE}/usr/share/antigravity-installer:${PYTHONPATH:-}"
+export XDG_DATA_DIRS="${HERE}/usr/share:${XDG_DATA_DIRS:-/usr/local/share:/usr/share}"
+
+# Locate system python3
+if command -v python3 >/dev/null 2>&1; then
+    PYTHON_EXE="python3"
+else
+    echo "Error: python3 is required to run Antigravity Installer." >&2
+    exit 1
+fi
+
+# Launch application
+exec "${PYTHON_EXE}" "${HERE}/usr/share/antigravity-installer/antigravity_installer/main.py" "$@"
