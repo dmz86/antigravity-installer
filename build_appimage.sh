@@ -64,26 +64,27 @@ gi.require_version('GdkPixbuf', '2.0')
 from gi.repository import GdkPixbuf
 
 src_icon = Path('${SCRIPT_DIR}/assets/icons/antigravity.png')
+assets_dir = Path('${SCRIPT_DIR}/assets/icons')
 appdir = Path('${APPDIR}')
 
 shutil.copy2(src_icon, appdir / 'google.antigravity.installer.png')
 shutil.copy2(src_icon, appdir / 'antigravity-installer.png')
 shutil.copy2(src_icon, appdir / '.DirIcon')
 
-pixbuf = GdkPixbuf.Pixbuf.new_from_file(str(src_icon))
 sizes = [512, 256, 128, 64, 48, 32, 16]
 
-for size in sizes:
-    target_dir = appdir / 'usr' / 'share' / 'icons' / 'hicolor' / f'{size}x{size}' / 'apps'
-    target_dir.mkdir(parents=True, exist_ok=True)
-    if size == pixbuf.get_width():
-        shutil.copy2(src_icon, target_dir / 'google.antigravity.installer.png')
-        shutil.copy2(src_icon, target_dir / 'antigravity-installer.png')
-    else:
-        scaled = pixbuf.scale_simple(size, size, GdkPixbuf.InterpType.BILINEAR)
-        if scaled:
-            scaled.savev(str(target_dir / 'google.antigravity.installer.png'), 'png', [], [])
-            scaled.savev(str(target_dir / 'antigravity-installer.png'), 'png', [], [])
+for icon_file in assets_dir.glob('*.png'):
+    pb = GdkPixbuf.Pixbuf.new_from_file(str(icon_file))
+    name = icon_file.stem
+    for size in sizes:
+        target_dir = appdir / 'usr' / 'share' / 'icons' / 'hicolor' / f'{size}x{size}' / 'apps'
+        target_dir.mkdir(parents=True, exist_ok=True)
+        if size == pb.get_width() and size == pb.get_height():
+            shutil.copy2(icon_file, target_dir / f'{name}.png')
+        else:
+            scaled = pb.scale_simple(size, size, GdkPixbuf.InterpType.BILINEAR)
+            if scaled:
+                scaled.savev(str(target_dir / f'{name}.png'), 'png', [], [])
 "
 
 # 5. Create AppRun entry point

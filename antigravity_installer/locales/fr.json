@@ -67,5 +67,6 @@
   "theme_dark": "Thème sombre",
   "theme_light": "Thème clair",
   "about_title": "À propos de l'installateur Antigravity",
-  "about_desc": "Installateur graphique officiel pour la suite Google Antigravity sous Linux x64."
+  "about_desc": "Installateur graphique officiel pour la suite Google Antigravity sous Linux x64.",
+  "non_gnome_alert": "Environnement de bureau '{desktop}' détecté : Antigravity Suite est optimisée pour GNOME/Ubuntu. L'intégration du dock peut varier."
 }

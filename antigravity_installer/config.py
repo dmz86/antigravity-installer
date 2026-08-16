@@ -172,3 +172,20 @@ Categories=Development;IDE;TextEditor;
 MimeType=application/x-antigravity-workspace;
 Keywords=vscode;antigravity;ide;ai;agent;
 """
+
+DESKTOP_ENTRY_CLI = """[Desktop Entry]
+Name=Antigravity CLI
+Name[it]=Antigravity CLI
+Comment=Ultra-fast AI agent terminal interface
+Comment[it]=Interfaccia terminale ultraveloce per agenti AI
+GenericName=Terminal Agent
+GenericName[it]=Agente Terminale
+Exec=agy
+Icon=antigravity-cli
+Type=Application
+Terminal=true
+StartupNotify=false
+Categories=Development;System;TerminalEmulator;
+Keywords=antigravity;agy;cli;agent;ai;terminal;
+"""
+

@@ -170,10 +170,11 @@ class MainWindow(Adw.ApplicationWindow):
                 application_name=_("app_title"),
                 application_icon="google-antigravity",
                 version=__version__,
-                developer_name="Google DeepMind / Antigravity Team",
+                developer_name="dmz86 / Google DeepMind Antigravity Community",
                 comments=_("about_desc"),
-                website="https://antigravity.google",
-                issue_url="https://antigravity.google/support",
+                website="https://github.com/dmz86/antigravity-installer",
+                issue_url="https://github.com/dmz86/antigravity-installer/issues",
+                support_url="https://antigravity.google",
             )
             dialog.present(self)
         else:
@@ -182,10 +183,11 @@ class MainWindow(Adw.ApplicationWindow):
                 application_name=_("app_title"),
                 application_icon="google-antigravity",
                 version=__version__,
-                developer_name="Google DeepMind / Antigravity Team",
+                developer_name="dmz86 / Google DeepMind Antigravity Community",
                 comments=_("about_desc"),
-                website="https://antigravity.google",
-                issue_url="https://antigravity.google/support",
+                website="https://github.com/dmz86/antigravity-installer",
+                issue_url="https://github.com/dmz86/antigravity-installer/issues",
+                support_url="https://antigravity.google",
             )
             dialog.present()
 

@@ -2,6 +2,7 @@
 Component selection and version configuration view for Antigravity Installer.
 """
 
+import os
 from typing import Callable, Dict, List, Optional
 
 import gi
@@ -156,6 +157,49 @@ class ViewComponents(Gtk.Box):
         self._build_ui()
 
     def _build_ui(self):
+        # 0. Non-GNOME Desktop Alert Banner
+        self.banner = Adw.Banner()
+        self.banner.set_button_label("OK")
+        self.banner.connect("button-clicked", lambda b: self.banner.set_revealed(False))
+        desktop = os.environ.get("XDG_CURRENT_DESKTOP", "") or os.environ.get("DESKTOP_SESSION", "")
+        if desktop and "gnome" not in desktop.lower() and "ubuntu" not in desktop.lower():
+            msg = _("non_gnome_alert").replace("{desktop}", desktop)
+            self.banner.set_title(msg)
+            self.banner.set_revealed(True)
+        else:
+            self.banner.set_revealed(False)
+        self.append(self.banner)
+
+        # 0.5 App Header / Hero Section with Antigravity Logo
+        header_box = Gtk.Box(orientation=Gtk.Orientation.VERTICAL, spacing=6)
+        header_box.set_halign(Gtk.Align.CENTER)
+        header_box.set_margin_top(6)
+        header_box.set_margin_bottom(16)
+
+        # Logo icon
+        self.header_logo = Gtk.Image()
+        logo_path = get_icon_path("antigravity") or get_icon_path("google.antigravity.installer")
+        if logo_path and logo_path.exists():
+            self.header_logo.set_from_file(str(logo_path))
+            self.header_logo.set_pixel_size(72)
+        else:
+            self.header_logo.set_from_icon_name("application-x-executable")
+            self.header_logo.set_pixel_size(72)
+
+        header_box.append(self.header_logo)
+
+        # Title
+        self.header_title = Gtk.Label(label=_("app_title"))
+        self.header_title.add_css_class("title-1")
+        header_box.append(self.header_title)
+
+        # Subtitle
+        self.header_subtitle = Gtk.Label(label=_("app_subtitle"))
+        self.header_subtitle.add_css_class("dim-label")
+        header_box.append(self.header_subtitle)
+
+        self.append(header_box)
+
         # 1. Mode selector card
         mode_group = Adw.PreferencesGroup()
         mode_group.set_title(_("mode_label"))
@@ -294,6 +338,14 @@ class ViewComponents(Gtk.Box):
 
     def refresh_translations(self):
         """Updates all strings in view when language changes."""
+        self.header_title.set_label(_("app_title"))
+        self.header_subtitle.set_label(_("app_subtitle"))
+
+        desktop = os.environ.get("XDG_CURRENT_DESKTOP", "") or os.environ.get("DESKTOP_SESSION", "")
+        if desktop and "gnome" not in desktop.lower() and "ubuntu" not in desktop.lower():
+            msg = _("non_gnome_alert").replace("{desktop}", desktop)
+            self.banner.set_title(msg)
+
         self.comp_group.set_title(_("components_title"))
         self.comp_group.set_description(_("components_desc"))
         self.mode_row.set_title(_("mode_label"))

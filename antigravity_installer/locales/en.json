@@ -67,5 +67,6 @@
   "theme_dark": "Dark Theme",
   "theme_light": "Light Theme",
   "about_title": "About Antigravity Installer",
-  "about_desc": "Official GUI installer and manager for Google Antigravity Suite on Linux x64."
+  "about_desc": "Official GUI installer and manager for Google Antigravity Suite on Linux x64.",
+  "non_gnome_alert": "Desktop environment '{desktop}' detected: Antigravity Suite is optimized for GNOME/Ubuntu. Desktop icons and dock behavior may vary."
 }

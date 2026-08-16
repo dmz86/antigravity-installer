@@ -15,6 +15,7 @@ from typing import Callable, Dict, List, Optional
 from antigravity_installer.config import (
     APPLICATIONS_DIR,
     BIN_DIR,
+    DESKTOP_ENTRY_CLI,
     DESKTOP_ENTRY_HUB,
     DESKTOP_ENTRY_HUB_URL,
     DESKTOP_ENTRY_IDE,
@@ -374,6 +375,19 @@ def install_cli(ctx: OperationContext) -> bool:
             cli_icon = get_cli_icon_source()
             if cli_icon:
                 register_icon_scales(cli_icon, "antigravity-cli")
+                ctx.log("SUCCESS", "Installed Antigravity CLI icon.")
+
+            # Register CLI desktop entry
+            try:
+                APPLICATIONS_DIR.mkdir(parents=True, exist_ok=True)
+                (APPLICATIONS_DIR / "antigravity-cli.desktop").write_text(
+                    DESKTOP_ENTRY_CLI, encoding="utf-8"
+                )
+                ctx.log("SUCCESS", "Registered antigravity-cli.desktop.")
+            except Exception as e:
+                ctx.log("WARNING", f"Could not write CLI desktop entry: {e}")
+
+            update_desktop_database_cache(ctx)
             return True
         else:
             ctx.log("ERROR", f"CLI installation script returned code {res.returncode}: {res.stderr}")
@@ -449,6 +463,7 @@ def uninstall_cli(ctx: OperationContext) -> bool:
         user_home / ".gemini" / "antigravity-cli",
         Path("/usr/local/bin/agy"),
         Path("/usr/bin/agy"),
+        APPLICATIONS_DIR / "antigravity-cli.desktop",
     ]
 
     for p in paths:
@@ -462,13 +477,36 @@ def uninstall_cli(ctx: OperationContext) -> bool:
         except Exception as e:
             ctx.log("WARNING", f"Could not remove {p}: {e}")
 
-    return True
+def ensure_system_fuse(ctx: OperationContext):
+    """Checks for FUSE2 support and installs libfuse2t64 / libfuse2 if needed on Ubuntu / Debian."""
+    try:
+        res = subprocess.run(["ldconfig", "-p"], capture_output=True, text=True)
+        if "libfuse.so.2" in res.stdout:
+            return
+
+        if shutil.which("apt-get"):
+            for pkg in ("libfuse2t64", "libfuse2"):
+                check_pkg = subprocess.run(["dpkg", "-s", pkg], capture_output=True, text=True)
+                if check_pkg.returncode == 0:
+                    return
+
+            ctx.log("INFO", "Installing libfuse2t64 for system-wide AppImage compatibility...")
+            for pkg in ("libfuse2t64", "libfuse2"):
+                r = subprocess.run(["apt-get", "install", "-y", pkg], capture_output=True, text=True)
+                if r.returncode == 0:
+                    ctx.log("SUCCESS", f"Installed {pkg} successfully.")
+                    return
+    except Exception as e:
+        ctx.log("WARNING", f"FUSE compatibility check: {e}")
 
 
 def repair_all(ctx: OperationContext) -> bool:
     """Repairs sandbox permissions, symlinks, desktop shortcuts and icons for installed components."""
     ctx.log("INFO", "Starting system repair and permission audit...")
     ctx.progress(0.1, "Auditing Antigravity Suite...")
+
+    # Ensure system-wide FUSE compatibility for AppImages
+    ensure_system_fuse(ctx)
 
     # Hub Repair
     if INSTALL_DIR_HUB.exists():
@@ -509,10 +547,21 @@ def repair_all(ctx: OperationContext) -> bool:
         except Exception as e:
             ctx.log("WARNING", f"Could not write IDE shortcuts: {e}")
 
-    # CLI icons
-    cli_icon = get_cli_icon_source()
-    if cli_icon:
-        register_icon_scales(cli_icon, "antigravity-cli")
+    # CLI repair (shortcuts and icons)
+    real_user = get_real_user()
+    user_bin = Path(f"/home/{real_user}/.local/bin/agy") if real_user != "root" else Path("/root/.local/bin/agy")
+    if user_bin.exists() or Path("/usr/local/bin/agy").exists() or Path("/usr/bin/agy").exists():
+        ctx.log("INFO", "Repairing Antigravity CLI shortcuts and icons...")
+        cli_icon = get_cli_icon_source()
+        if cli_icon:
+            register_icon_scales(cli_icon, "antigravity-cli")
+        try:
+            (APPLICATIONS_DIR / "antigravity-cli.desktop").write_text(
+                DESKTOP_ENTRY_CLI, encoding="utf-8"
+            )
+            ctx.log("SUCCESS", "Repaired Antigravity CLI desktop shortcut.")
+        except Exception as e:
+            ctx.log("WARNING", f"Could not write CLI shortcuts: {e}")
 
     update_desktop_database_cache(ctx)
     ctx.progress(1.0, "Repair completed.")
