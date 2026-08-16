@@ -1,61 +1,35 @@
-# 🚀 Release Notes - v1.0.0
+# 🚀 Release Notes - v1.1.0
 
 ## Google Antigravity Suite Installer & Manager (Linux x64)
 
-We are proud to announce the first official stable release (**v1.0.0**) of **Antigravity Suite Installer**, the modern, open-source graphical installer and system manager for the **Google Antigravity** suite on Linux x86_64 (developed and optimized for **Ubuntu 26.04 LTS**, **24.04 LTS**, **22.04 LTS**, and derivatives).
+We are pleased to release **v1.1.0** of **Antigravity Suite Installer**, introducing system-wide installation to `/opt`, automated GitHub release update notifications, and desktop launcher deduplication.
 
 ---
 
-## ✨ What's New & Key Highlights
+## ✨ What's New in v1.1.0
 
-### 📦 Complete Suite Management
-- **Antigravity 2.0 (Hub)**: Full lifecycle management (install, update, repair, uninstall) with automatic `.desktop` launcher and URL protocol handlers (`antigravity://`).
-- **Antigravity IDE**: Automated extraction and setup of the native AI-first IDE environment based on Electron/VSCode with global binary symlinks.
-- **Antigravity CLI (`agy`)**: Official curl bootstrap integration, global `/usr/local/bin/agy` symlinking, and a dedicated `antigravity-cli.desktop` terminal launcher.
+### 📦 1. Permanent System Installation to `/opt`
+- **First-Run Interactive Setup**: When launched from temporary or portable locations (e.g. `~/Downloads` or `/tmp`), the installer now presents an intuitive Libadwaita prompt asking if you'd like to install it permanently.
+- **System Integration**:
+  - Installs the standalone AppImage into `/opt/antigravity-installer/Antigravity-Installer-x86_64.AppImage`.
+  - Creates a global CLI shortcut at `/usr/bin/antigravity-installer`.
+  - Configures the desktop entry in `/usr/share/applications/google.antigravity.installer.desktop`.
+- **Smart NoDisplay Fallback**: If temporary execution is preferred, the installer configures `NoDisplay=true` on user-level entries, keeping the application menu clean while retaining active dock icon matching during runtime.
 
-### 🎨 Modern Libadwaita / GTK4 Interface
-- Built adhering strictly to the **GNOME Human Interface Guidelines (HIG)**.
-- **Hero Section**: Beautiful Antigravity vector logo with localized title and subtitle.
-- **Live Terminal Log Viewer**: Real-time streaming log output for all privileged operations.
-- **Dark / Light Theme**: Automatic synchronization with system appearance preferences with manual toggle.
+### 🌐 2. Automated GitHub Releases Update Checker
+- Background version checker querying `https://api.github.com/repos/dmz86/antigravity-installer/releases/latest`.
+- Non-intrusive `Adw.Banner` alert at the top of the interface notifying users whenever a newer version is published.
+- Direct **"Download"** action opening the release assets page in the default web browser.
 
-### 🎨 Official Vector Squircle Icons
-- High-definition squircle icons extracted directly from official Google Antigravity vector assets (`antigravity.google`).
-- **Hub**: Clean white squircle with subtle border.
-- **IDE**: Dark squircle (`#202124`).
-- **CLI**: Seamless dark squircle with rainbow arch pixel artwork.
-- Automatically scaled and registered across all 7 standard Freedesktop resolutions (`512x512`, `256x256`, `128x128`, `64x64`, `48x48`, `32x32`, `16x16`) with proper `index.theme` cache initialization.
+### 🧹 3. Desktop Launcher Deduplication & Clean-up
+- Cleaned up redundant `.desktop` entries in user directories (`~/.local/share/applications/`), ensuring a strict 1-to-1 mapping for all suite components:
+  - **Antigravity 2.0 (Hub)** (`antigravity.desktop`)
+  - **Antigravity IDE** (`antigravity-ide.desktop`)
+  - **Antigravity CLI** (`antigravity-cli.desktop`)
+  - **Antigravity Suite Installer** (`google.antigravity.installer.desktop`)
 
-### 🛡️ Secure Polkit Privilege Separation
-- The graphical interface executes entirely as an unprivileged user process.
-- Privileged operations (`/usr/share/`, `/usr/bin/`, SUID sandbox setups) are safely delegated through **Polkit (`pkexec`)** to an isolated worker process.
-- Built-in AppImage FUSE permissions bridging: automatically stages worker scripts into world-readable temporary paths so `pkexec` never fails due to FUSE mountpoint restrictions.
-
-### 🔧 SUID Sandbox & System Permission Repair Engine
-- One-click **"Repair Permissions and Icons"** mode.
-- Automatically audits and configures `chmod 4755 root:root` on `chrome-sandbox` binaries to prevent Electron startup failures.
-- Verifies global symlinks in `/usr/bin/` and desktop registry caches.
-
-### 📦 Universal Standalone AppImage & Smart Launcher
-- **Single Portable File**: `Antigravity-Installer-x86_64.AppImage` (1.2 MB) bundles all assets, ASAR extractor, and locales.
-- **FUSE Automation**: Native fallback to `--appimage-extract-and-run` on fresh Ubuntu 24.04/26.04 installations where legacy `libfuse2` is absent, plus automatic system package installation (`libfuse2t64`) during setup.
-- **Bootstrap Launcher**: [`install.sh`](install.sh) provides a universal, zero-friction launch wrapper.
-
-### 🌍 Multi-Language Support (i18n)
-- Fully translated into **5 languages**:
-  - 🇬🇧 English
-  - 🇮🇹 Italian (Italiano)
-  - 🇪🇸 Spanish (Español)
-  - 🇫🇷 French (Français)
-  - 🇩🇪 German (Deutsch)
-- Automatic system locale detection with instant live switching from the interface.
-
-### ⚠️ Desktop Environment Detection
-- Automatically detects the active desktop session (`XDG_CURRENT_DESKTOP`).
-- Shows a non-intrusive `Adw.Banner` alert on non-GNOME environments (KDE Plasma, XFCE, Cinnamon, MATE, LXQt) explaining potential dock integration variances.
-
-### 💻 Non-Interactive CLI Automation Mode
-- Fully headless execution via `--non-interactive` / `-y` for developer provisioning, Docker containers, and CI/CD pipelines.
+### 🐧 4. Platform Optimization
+- Explicit support and optimization for **Ubuntu 26.04 LTS**, **Ubuntu 24.04 LTS**, and modern GNOME / Wayland environments.
 
 ---
 
@@ -83,7 +57,7 @@ chmod +x Antigravity-Installer-x86_64.AppImage
 ./Antigravity-Installer-x86_64.AppImage
 ```
 
-### Or use the Smart Bootstrap Launcher
+### Or use the Universal Launcher
 
 ```bash
 ./install.sh
